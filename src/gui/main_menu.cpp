@@ -149,10 +149,12 @@ MainMenu::MainMenu() : BaseMenu()
     lv_obj_align(btn, LV_ALIGN_BOTTOM_MID, 0, -5);
     lv_obj_set_width(btn,200);
     lbl = lv_label_create(btn);    
-    lv_label_set_text(lbl, "Start");
+    lv_label_set_text(lbl, "START");
     lv_obj_center(lbl);
-    lv_obj_set_style_text_font(lbl,&lv_font_montserrat_28,0);
-    lv_obj_set_style_text_color(lbl,lv_color_make(255,0,0),0);
+    lv_obj_set_style_text_font(lbl,&lv_font_montserrat_28,0);    
+    lv_obj_set_style_bg_color(btn,lv_color_make(0,200,0),0);
+    lv_obj_set_style_radius(btn,20,0);
+    
 
 
     lv_scr_load(m_screen);
@@ -224,22 +226,26 @@ void MainMenu::BTN_temp_dec(lv_event_t *e){
 
 void MainMenu::BTN_timer_h_inc(lv_event_t *e){
     char txt[20];    
+    if( m_pMainMenu->m_long_press_timeout.elapsed() < 1000000 ) return;
     m_pMainMenu->m_timer_h++;
     if( (m_pMainMenu->m_timer_h) > 6){
         m_pMainMenu->m_timer_h = 6;
     }
     sprintf(txt,"%02d",m_pMainMenu->m_timer_h);
     lv_label_set_text(m_pMainMenu->m_lbl_timer_h,txt);  
+    m_pMainMenu->m_long_press_timeout.reset();
 }
 
 void MainMenu::BTN_timer_h_dec(lv_event_t *e){
     char txt[20];    
+    if( m_pMainMenu->m_long_press_timeout.elapsed() < 1000000 ) return;
     m_pMainMenu->m_timer_h--;
     if( (m_pMainMenu->m_timer_h) < 0){
         m_pMainMenu->m_timer_h = 0;
     }
     sprintf(txt,"%02d",m_pMainMenu->m_timer_h);
     lv_label_set_text(m_pMainMenu->m_lbl_timer_h,txt);  
+    m_pMainMenu->m_long_press_timeout.reset();
 }
 
 void MainMenu::BTN_timer_m_inc(lv_event_t *e){

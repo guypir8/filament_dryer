@@ -1,6 +1,7 @@
 #ifndef _MAIN_MENU_
 #define _MAIN_MENU_
 #include "base_menu.h"
+#include "system/UTimer.h"
 
 class MainMenu : public BaseMenu {
     public:
@@ -11,6 +12,8 @@ class MainMenu : public BaseMenu {
 
     private:
         static MainMenu * m_pMainMenu;
+
+        UTimer m_long_press_timeout;
 
         lv_obj_t * m_chart;
         lv_chart_series_t * m_chart_ser_temperature;
