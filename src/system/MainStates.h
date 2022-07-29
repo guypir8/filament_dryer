@@ -5,6 +5,9 @@ typedef enum{
 
     /* Menu principali */
     MAIN_MENU,
+    START,
+    RAMPUP,
+    PID,
 
 } MAIN_STATE;
 

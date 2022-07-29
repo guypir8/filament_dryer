@@ -3,7 +3,7 @@
 
 #include "DHT.h"
 #include "gui/main_menu.h"
-
+#include "system/Pid.h"
 
 #define RECEIVER_PIN 32
 
@@ -24,13 +24,15 @@ class MainApp {
         /* Methods */
         void tick1sec();
         void closeAllMenu(BaseMenu * except);    
-        void getThermoIgrometerData();    
+        void getThermoIgrometerData(); 
+        void setHeater(bool status);
         
         /* Flags */
         bool m_single_machine_step;
       
         /* Plugins */
         DHT * m_dht;
+        Pid * m_pid;
 
         /* Timers */
         UTimer m_1sec;        

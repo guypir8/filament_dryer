@@ -1,6 +1,7 @@
 #include "MainApp.h"
 #include "system/MainStates.h"
 #include "string.h"
+#include "system/Rele.h"
 
 /**
  * @brief Construct a new Main App:: Main App object
@@ -20,6 +21,9 @@ MainApp::MainApp(){
     m_dht = new DHT(32, DHT22);
     m_dht->begin();
     m_2sec = false;
+    m_pid = NULL;
+
+    
 }
 
 /**
@@ -41,6 +45,8 @@ MainApp::~MainApp(){
  * 
  */
 void MainApp::run(){
+    bool heater;
+    float action;
 
     /* Esegue loop esterni */
 
@@ -51,7 +57,31 @@ void MainApp::run(){
                     m_main_menu = new MainMenu();
                 }
                 break;
-                         
+            case MAIN_STATE::START:
+                if(m_pid) delete m_pid;
+                m_pid = new Pid(m_main_menu->getTarget(),0.5);
+                main_state = RAMPUP;
+                break;
+            case MAIN_STATE::RAMPUP:        
+                heater = m_pid->ramp_up(m_temperature);
+                //Serial.print("heater="); Serial.println(heater);
+                RELE.setState(heater);
+                if(!heater){
+                    Serial.println("END RAMP UP");
+                    main_state = PID;                
+                }
+                break;  
+            case MAIN_STATE::PID:
+                action = m_pid->PID_control(m_temperature);
+                if(action > -1){
+                   /*
+                   if(action > 127) RELE.setState(true);
+                   else RELE.setState(false);
+                   */
+                   RELE.setStatePWM(action,30);
+                   Serial.printf("action=%f\n",action);
+                }
+                break;   
     }
     
 
@@ -82,7 +112,7 @@ void MainApp::tick1sec(){
     if(m_2sec){
         getThermoIgrometerData();
         m_main_menu->setChartData(m_temperature,m_humidity);
-        m_2sec = false;
+        m_2sec = false;        
     }else{
         m_2sec = true;
     }
@@ -110,4 +140,8 @@ void MainApp::getThermoIgrometerData(){
     Serial.print(F("%  Temperature: "));
     Serial.print(t);
     Serial.println(F("°C "));
+}
+
+void MainApp::setHeater(bool status){
+
 }
