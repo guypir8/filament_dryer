@@ -15,7 +15,8 @@ class MainApp {
         void run();
         
     private:
-
+        int m_timer_sec;
+        int m_timer_sec_old;
         float m_temperature;
         float m_humidity;
 

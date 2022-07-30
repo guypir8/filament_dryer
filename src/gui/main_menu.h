@@ -11,6 +11,8 @@ class MainMenu : public BaseMenu {
         void setChartData(float temperature, float humidity);
 
         float getTarget();
+        int getTimerSec();
+        void setTimerString(char * txt);
 
     private:
         static MainMenu * m_pMainMenu;
@@ -29,6 +31,10 @@ class MainMenu : public BaseMenu {
         lv_obj_t * m_lbl_timer_h;
         lv_obj_t * m_lbl_timer_m;
 
+        lv_obj_t * m_lbl_run_temperature;
+        lv_obj_t * m_lbl_run_humidity;
+        lv_obj_t * m_lbl_run_timer;
+
         lv_obj_t * m_canvas_main;
         lv_obj_t * m_canvas_exec;
 
@@ -38,6 +44,7 @@ class MainMenu : public BaseMenu {
         
         static void CHART_onEvent(lv_event_t *e);
         static void BTN_start_click(lv_event_t *e);
+        static void BTN_stop_click(lv_event_t *e);
         static void BTN_temp_inc(lv_event_t *e);
         static void BTN_temp_dec(lv_event_t *e);
         static void BTN_timer_h_inc(lv_event_t *e);

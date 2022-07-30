@@ -11,6 +11,7 @@ MainApp::MainApp(){
     main_state = MAIN_STATE::MAIN_MENU;   
     m_1sec.reset();
     m_single_machine_step = false;
+    m_timer_sec_old = 0;
 
     /* Menu */
     m_main_menu = NULL;  
@@ -47,6 +48,9 @@ MainApp::~MainApp(){
 void MainApp::run(){
     bool heater;
     float action;
+    char txt[20];
+    int h,m;    
+
 
     /* Esegue loop esterni */
 
@@ -56,22 +60,35 @@ void MainApp::run(){
                 if(m_main_menu == NULL){
                     m_main_menu = new MainMenu();
                 }
+                RELE.setState(false);
                 break;
-            case MAIN_STATE::START:
+            case MAIN_STATE::START:            
                 if(m_pid) delete m_pid;
                 m_pid = new Pid(m_main_menu->getTarget(),0.5);
+                sprintf(txt,"WARM UP");
+                m_main_menu->setTimerString(txt);                
                 main_state = RAMPUP;
                 break;
             case MAIN_STATE::RAMPUP:        
                 heater = m_pid->ramp_up(m_temperature);
-                //Serial.print("heater="); Serial.println(heater);
-                RELE.setState(heater);
                 if(!heater){
+                    m_timer_sec = m_main_menu->getTimerSec();
                     Serial.println("END RAMP UP");
                     main_state = PID;                
+                }else{
+                    RELE.setState(heater);
                 }
                 break;  
             case MAIN_STATE::PID:
+
+                if(m_timer_sec != m_timer_sec_old){
+                    h=m_timer_sec / 3600;
+                    m = (m_timer_sec - (h*3600))/60;
+                    sprintf(txt,"%02d:%02d",h,m);
+                    m_main_menu->setTimerString(txt);
+                    m_timer_sec_old = m_timer_sec;
+                }    
+
                 action = m_pid->PID_control(m_temperature);
                 if(action > -1){
                    /*
@@ -80,6 +97,9 @@ void MainApp::run(){
                    */
                    RELE.setStatePWM(action,30);
                    Serial.printf("action=%f\n",action);
+                }
+                if(m_timer_sec == 0){
+                    main_state = MAIN_MENU;
                 }
                 break;   
     }
@@ -109,6 +129,9 @@ void MainApp::closeAllMenu(BaseMenu * except){
  * 
  */
 void MainApp::tick1sec(){
+
+    if(m_timer_sec >= 0) m_timer_sec--;
+
     if(m_2sec){
         getThermoIgrometerData();
         m_main_menu->setChartData(m_temperature,m_humidity);

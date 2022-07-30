@@ -14,6 +14,8 @@ MainMenu::MainMenu() : BaseMenu()
 
     m_screen = api_create_screen();
 
+    char txt[20];
+
     /**
      * @brief Create a Chart
      * 
@@ -61,22 +63,17 @@ MainMenu::MainMenu() : BaseMenu()
     lv_obj_set_style_text_color(m_lbl_humidity,lv_color_hex(0x0000ff),0);
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                  MENU DI SELEZIONE
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     m_canvas_main = lv_canvas_create(m_screen);
     lv_obj_set_pos(m_canvas_main,0,190);
     lv_obj_set_size(m_canvas_main,240,130);
 
-    m_canvas_exec = lv_canvas_create(m_screen);
-    lv_obj_set_pos(m_canvas_exec,0,190);
-    lv_obj_set_size(m_canvas_exec,240,130);
-
-    lv_obj_add_flag(m_canvas_exec,LV_OBJ_FLAG_HIDDEN);
-
     /**
      * @brief Create target temperature spinbox
      * 
      */    
-    char txt[20];
     sprintf(txt,"%2d °C",m_target);
 
     m_lbl_target = lv_label_create(m_canvas_main);
@@ -107,7 +104,6 @@ MainMenu::MainMenu() : BaseMenu()
      * @brief Change timer
      * 
      */
-
     sprintf(txt,"%02d",m_timer_h);
     m_lbl_timer_h = lv_label_create(m_canvas_main);
     lv_obj_set_style_text_align(m_lbl_timer_h, LV_TEXT_ALIGN_CENTER, 0);
@@ -169,6 +165,55 @@ MainMenu::MainMenu() : BaseMenu()
     lv_obj_set_style_radius(btn,20,0);    
     lv_obj_add_event_cb(btn, BTN_start_click, LV_EVENT_CLICKED, NULL);    
 
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                  MENU DI ESECUZIONE
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////      
+    m_canvas_exec = lv_canvas_create(m_screen);
+    lv_obj_set_pos(m_canvas_exec,0,190);
+    lv_obj_set_size(m_canvas_exec,240,130);
+
+    lv_obj_add_flag(m_canvas_exec,LV_OBJ_FLAG_HIDDEN);
+
+    m_lbl_run_temperature = lv_label_create(m_canvas_exec);
+    lv_label_set_long_mode(m_lbl_run_temperature, LV_LABEL_LONG_WRAP);
+    lv_label_set_text(m_lbl_run_temperature, txt);
+    lv_obj_set_style_text_align(m_lbl_run_temperature, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_set_width(m_lbl_run_temperature, 120);
+    lv_obj_align(m_lbl_run_temperature,LV_ALIGN_TOP_LEFT,0,0);
+    lv_obj_set_style_text_font(m_lbl_run_temperature,&lv_font_montserrat_28,0);
+    lv_obj_set_style_text_color(m_lbl_run_temperature,lv_color_make(255,0,0),0);
+
+    m_lbl_run_humidity = lv_label_create(m_canvas_exec);
+    lv_label_set_long_mode(m_lbl_run_humidity, LV_LABEL_LONG_WRAP);
+    lv_label_set_text(m_lbl_run_humidity, txt);
+    lv_obj_set_style_text_align(m_lbl_run_humidity, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_set_width(m_lbl_run_humidity, 120);
+    lv_obj_align(m_lbl_run_humidity,LV_ALIGN_TOP_RIGHT,0,0);
+    lv_obj_set_style_text_font(m_lbl_run_humidity,&lv_font_montserrat_28,0);
+    lv_obj_set_style_text_color(m_lbl_run_humidity,lv_color_make(0,0,255),0);
+
+    m_lbl_run_timer = lv_label_create(m_canvas_exec);
+    lv_label_set_long_mode(m_lbl_run_timer, LV_LABEL_LONG_WRAP);
+    lv_label_set_text(m_lbl_run_timer, "...");
+    lv_obj_set_style_text_align(m_lbl_run_timer, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_set_width(m_lbl_run_timer, 240);
+    lv_obj_align(m_lbl_run_timer,LV_ALIGN_TOP_MID,0,36);
+    lv_obj_set_style_text_font(m_lbl_run_timer,&lv_font_montserrat_28,0);
+    lv_obj_set_style_text_color(m_lbl_run_timer,lv_color_make(255,255,255),0);
+
+    btn = lv_btn_create(m_canvas_exec);
+    //lv_obj_add_event_cb(btn, event_handler, LV_EVENT_ALL, NULL);
+    lv_obj_align(btn, LV_ALIGN_BOTTOM_MID, 0, -5);
+    lv_obj_set_width(btn,200);
+    lbl = lv_label_create(btn);    
+    lv_label_set_text(lbl, "STOP");
+    lv_obj_center(lbl);
+    lv_obj_set_style_text_font(lbl,&lv_font_montserrat_28,0);    
+    lv_obj_set_style_bg_color(btn,lv_color_make(255,0,0),0);
+    lv_obj_set_style_radius(btn,20,0);    
+    lv_obj_add_event_cb(btn, BTN_stop_click, LV_EVENT_CLICKED, NULL);    
+
+
 
     lv_scr_load(m_screen);
 }
@@ -195,6 +240,12 @@ void MainMenu::setChartData(float temperature, float humidity)
     lv_label_set_text(m_lbl_temperature, txt);
     sprintf(txt,"% 3.1f %%",humidity);
     lv_label_set_text(m_lbl_humidity, txt);
+
+    sprintf(txt,"% 3.1f °C",temperature);
+    lv_label_set_text(m_lbl_run_temperature, txt);
+    sprintf(txt,"% 3.1f %%",humidity);
+    lv_label_set_text(m_lbl_run_humidity, txt);
+    
 }
 
 /**
@@ -287,6 +338,20 @@ void MainMenu::BTN_start_click(lv_event_t *e){
     main_state = START;
 }
 
+void MainMenu::BTN_stop_click(lv_event_t *e){
+    lv_obj_add_flag(m_pMainMenu->m_canvas_exec,LV_OBJ_FLAG_HIDDEN);
+    lv_obj_clear_flag(m_pMainMenu->m_canvas_main,LV_OBJ_FLAG_HIDDEN);
+    main_state = MAIN_MENU;
+}
+
 float MainMenu::getTarget(){
     return m_target;
+}
+
+int MainMenu::getTimerSec(){
+    return (m_timer_h * 3600) + (m_timer_m * 60);
+}
+
+void MainMenu::setTimerString(char * txt){
+    lv_label_set_text(m_pMainMenu->m_lbl_run_timer,txt);  
 }
