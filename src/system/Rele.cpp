@@ -18,14 +18,18 @@ bool Rele::getState(){
 }
 
 void Rele::setStatePWM(int pwm255, int period_sec){
+    if(pwm255>255) pwm255 = 255;
     if(!m_pwm_started){        
         m_pwm_time_on = (period_sec * pwm255)/255;
-        if(m_pwm_time_on < 5) return;
+        if(m_pwm_time_on < 5){
+            setState(false);
+            return;
+        }
         
         m_pwm_time_period = period_sec;
         m_pwm_timer.reset();
         setState(true);
-        m_pwm_started = true;
+        m_pwm_started = true;        
     }else{
         if( m_pwm_timer.elapsed() >= (m_pwm_time_period*1000000) ){
             m_pwm_started = false;

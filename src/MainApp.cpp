@@ -2,6 +2,7 @@
 #include "system/MainStates.h"
 #include "string.h"
 #include "system/Rele.h"
+#include "system/ConfigData.h"
 
 /**
  * @brief Construct a new Main App:: Main App object
@@ -24,7 +25,6 @@ MainApp::MainApp(){
     m_2sec = false;
     m_pid = NULL;
 
-    
 }
 
 /**
@@ -49,7 +49,7 @@ void MainApp::run(){
     bool heater;
     float action;
     char txt[20];
-    int h,m;    
+    int h,m,s;    
 
 
     /* Esegue loop esterni */
@@ -64,10 +64,13 @@ void MainApp::run(){
                 break;
             case MAIN_STATE::START:            
                 if(m_pid) delete m_pid;
-                m_pid = new Pid(m_main_menu->getTarget(),0.5);
+                m_pid = new Pid(m_main_menu->getTarget(),1);
                 sprintf(txt,"WARM UP");
                 m_main_menu->setTimerString(txt);                
                 main_state = RAMPUP;
+
+                configData.store(CONFIG_SETPOINT,(int)(m_main_menu->getTarget()));
+                configData.store(CONFIG_SETTIMER,(int)(m_main_menu->getTimerSec()));
                 break;
             case MAIN_STATE::RAMPUP:        
                 heater = m_pid->ramp_up(m_temperature);
@@ -77,33 +80,51 @@ void MainApp::run(){
                     main_state = PID;                
                 }else{
                     RELE.setState(heater);
+                    m_main_menu->setHeater(heater);
                 }
                 break;  
             case MAIN_STATE::PID:
-
                 if(m_timer_sec != m_timer_sec_old){
                     h=m_timer_sec / 3600;
                     m = (m_timer_sec - (h*3600))/60;
-                    sprintf(txt,"%02d:%02d",h,m);
+                    s = (m_timer_sec - (h*3600) - (m*60));
+                    sprintf(txt,"%02d:%02d:%02d",h,m,s);
                     m_main_menu->setTimerString(txt);
                     m_timer_sec_old = m_timer_sec;
                 }    
 
                 action = m_pid->PID_control(m_temperature);
                 if(action > -1){
-                   /*
-                   if(action > 127) RELE.setState(true);
-                   else RELE.setState(false);
-                   */
                    RELE.setStatePWM(action,30);
+                   m_main_menu->setHeater(RELE.getState());
                    Serial.printf("action=%f\n",action);
                 }
                 if(m_timer_sec == 0){
-                    main_state = MAIN_MENU;
+                    m_main_menu->stop();
                 }
                 break;   
+            case MAIN_STATE::ALARM:
+
+                break;
     }
     
+    /* Allarme se si supera gli 80°C per 5 secondi */
+    if(m_temperature >= 80 && m_overtemp_timer.elapsed() > 5000000){
+        RELE.setState(false);
+        m_main_menu->alarm("Overtemp");
+    }else if( m_temperature < 80 ){
+        m_overtemp_timer.reset();
+    }
+
+    /* Allarme se non si raggiunge il set point in 2 ore */
+    if(RELE.getState()){
+        if( (abs(m_temperature-m_main_menu->getTarget()) > 3) && m_heatfail_timer.elapsed() > 7200000000 ){
+            RELE.setState(false);
+            m_main_menu->alarm("Heater fail");
+        }else if( abs(m_temperature-m_main_menu->getTarget()) < 3 ){
+            m_heatfail_timer.reset();
+        }
+    }
 
     /* Tick 1 secondo */
     if(m_1sec.elapsed() > 1000000){

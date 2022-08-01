@@ -36,7 +36,9 @@ class MainApp {
         Pid * m_pid;
 
         /* Timers */
-        UTimer m_1sec;        
+        UTimer m_1sec;     
+        UTimer m_overtemp_timer;   
+        UTimer m_heatfail_timer;
 
         /* Callbacks */
 

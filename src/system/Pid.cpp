@@ -5,9 +5,9 @@ Pid::Pid(float target, float diff){
     Setpoint = target;
     SetpointDiff = diff;
 
-    kp=160;     //Mine was 2.5
-    ki=0.1;    //Mine was 0.06
-    kd=10;     //Mine was 0.8   
+    kp=160;    //2.5
+    ki=0.06;    //0.06
+    kd=50;     // 0.8   
 
     PID_p = 0;
     PID_d = 0;
@@ -34,14 +34,13 @@ float Pid::PID_control(float real_temp)
     elapsedTime = millis() - prev_time;
     if (elapsedTime > refresh_rate)
     {
-        // 1. We get the temperature and calculate the error
+
         now_pid_error = Setpoint - real_temp;
 
-        // 2. We calculate PID values
         PID_p = kp * now_pid_error;
-        PID_d = kd * ((now_pid_error - prev_pid_error) / refresh_rate);
-        // 2.2 Decide if we apply I or not. Only when error is very small
-        if (-3 < now_pid_error && now_pid_error < 3)
+        PID_d = kd * ((now_pid_error - prev_pid_error) / (float)refresh_rate);
+
+        if (-1 < now_pid_error && now_pid_error < 1)
         {
             PID_i = PID_i + (ki * now_pid_error);
             Serial.printf("PID_i=%f i=%f\n",PID_i,ki * now_pid_error);
@@ -51,11 +50,11 @@ float Pid::PID_control(float real_temp)
             PID_i = 0;
         }
         Serial.printf("ERR=%f P=%f I=%f D=%f\n",now_pid_error, PID_p , PID_i , PID_d);
-        // 3. Calculate and map total PID value
+
         PID_total = PID_p + PID_i + PID_d;
         PID_total = map(PID_total, 0, 150, 0, 255);
 
-        // 4. Set limits for PID values
+
         if (PID_total < 0)
         {
             PID_total = 0;
@@ -65,9 +64,9 @@ float Pid::PID_control(float real_temp)
             PID_total = 255;
         }
 
-        // 7. Save values for next loop
-        prev_time = millis();           // Store time for next loop
-        prev_pid_error = now_pid_error; // Store error for next loop
+
+        prev_time = millis();
+        prev_pid_error = now_pid_error;
     }
 
     return PID_total;
@@ -87,4 +86,4 @@ bool Pid::ramp_up(float real_temp){
     prev_time = millis();
   }
   return heater;
-}//End of ramp_up loop
+}

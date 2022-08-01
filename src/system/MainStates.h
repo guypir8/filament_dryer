@@ -8,6 +8,7 @@ typedef enum{
     START,
     RAMPUP,
     PID,
+    ALARM,
 
 } MAIN_STATE;
 

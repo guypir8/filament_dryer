@@ -1,5 +1,7 @@
 #include "main_menu.h"
 #include <Arduino.h>
+#include "system/ConfigData.h"
+
 
 MainMenu* MainMenu::m_pMainMenu = 0;
 
@@ -8,9 +10,9 @@ MainMenu::MainMenu() : BaseMenu()
 
     m_pMainMenu = this;
 
-    m_target = 20;
-    m_timer_h = 0;
-    m_timer_m = 30;
+    m_target = configData.m_setpoint;
+    m_timer_h = configData.m_settimer/3600;
+    m_timer_m = (configData.m_settimer - (m_timer_h*3600)) / 60;
 
     m_screen = api_create_screen();
 
@@ -28,7 +30,8 @@ MainMenu::MainMenu() : BaseMenu()
     lv_obj_set_style_size(m_chart, 0, LV_PART_INDICATOR);
     lv_obj_add_event_cb(m_chart, CHART_onEvent, LV_EVENT_DRAW_PART_BEGIN, NULL);
 
-    lv_chart_set_range(m_chart,LV_CHART_AXIS_PRIMARY_Y,20,80);
+    lv_chart_set_range(m_chart,LV_CHART_AXIS_PRIMARY_Y,200,800);
+    lv_chart_set_range(m_chart,LV_CHART_AXIS_SECONDARY_Y,0,1000);
 
     lv_chart_set_div_line_count(m_chart,10,10);
 
@@ -42,7 +45,7 @@ MainMenu::MainMenu() : BaseMenu()
     m_chart_ser_temperature = lv_chart_add_series(m_chart, lv_palette_main(LV_PALETTE_RED), LV_CHART_AXIS_PRIMARY_Y);
     m_chart_ser_humidity = lv_chart_add_series(m_chart, lv_palette_main(LV_PALETTE_BLUE), LV_CHART_AXIS_SECONDARY_Y);
     m_chart_ser_target = lv_chart_add_series(m_chart, lv_palette_main(LV_PALETTE_GREEN), LV_CHART_AXIS_PRIMARY_Y);
-    lv_chart_set_all_value(m_chart,m_chart_ser_target,m_target);
+    lv_chart_set_all_value(m_chart,m_chart_ser_target,m_target*10);
 
     /**
      * @brief Create labels for actual data
@@ -61,6 +64,14 @@ MainMenu::MainMenu() : BaseMenu()
     lv_obj_set_style_text_align(m_lbl_humidity, LV_TEXT_ALIGN_CENTER, 0);
     lv_obj_set_pos(m_lbl_humidity,150,25);
     lv_obj_set_style_text_color(m_lbl_humidity,lv_color_hex(0x0000ff),0);
+
+    LV_IMG_DECLARE(fire);
+    m_fire = lv_img_create(m_screen);
+    lv_img_set_src(m_fire, &fire);
+    lv_obj_align(m_fire, LV_ALIGN_TOP_LEFT, 30, 5);
+    lv_obj_set_size(m_fire, 48, 48);
+    lv_obj_add_flag(m_fire,LV_OBJ_FLAG_HIDDEN);
+
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                  MENU DI SELEZIONE
@@ -81,7 +92,6 @@ MainMenu::MainMenu() : BaseMenu()
     lv_label_set_text(m_lbl_target, txt);
     lv_obj_set_style_text_align(m_lbl_target, LV_TEXT_ALIGN_CENTER, 0);
     lv_obj_set_width(m_lbl_target, 100);
-    //lv_obj_align_to(m_lbl_target,m_chart,LV_ALIGN_OUT_BOTTOM_MID,0,10);
     lv_obj_align(m_lbl_target,LV_ALIGN_TOP_MID,0,0);
     lv_obj_set_style_text_font(m_lbl_target,&lv_font_montserrat_28,0);
     lv_obj_set_style_text_color(m_lbl_target,lv_color_make(0,255,0),0);
@@ -183,22 +193,23 @@ MainMenu::MainMenu() : BaseMenu()
     lv_obj_set_style_text_font(m_lbl_run_temperature,&lv_font_montserrat_28,0);
     lv_obj_set_style_text_color(m_lbl_run_temperature,lv_color_make(255,0,0),0);
 
-    m_lbl_run_humidity = lv_label_create(m_canvas_exec);
-    lv_label_set_long_mode(m_lbl_run_humidity, LV_LABEL_LONG_WRAP);
-    lv_label_set_text(m_lbl_run_humidity, txt);
-    lv_obj_set_style_text_align(m_lbl_run_humidity, LV_TEXT_ALIGN_CENTER, 0);
-    lv_obj_set_width(m_lbl_run_humidity, 120);
-    lv_obj_align(m_lbl_run_humidity,LV_ALIGN_TOP_RIGHT,0,0);
-    lv_obj_set_style_text_font(m_lbl_run_humidity,&lv_font_montserrat_28,0);
-    lv_obj_set_style_text_color(m_lbl_run_humidity,lv_color_make(0,0,255),0);
+    m_lbl_run_target = lv_label_create(m_canvas_exec);
+    lv_label_set_long_mode(m_lbl_run_target, LV_LABEL_LONG_WRAP);
+    lv_label_set_text(m_lbl_run_target, txt);
+    lv_obj_set_style_text_align(m_lbl_run_target, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_set_width(m_lbl_run_target, 120);
+    lv_obj_align(m_lbl_run_target,LV_ALIGN_TOP_RIGHT,0,0);
+    lv_obj_set_style_text_font(m_lbl_run_target,&lv_font_montserrat_28,0);
+    lv_obj_set_style_text_color(m_lbl_run_target,lv_color_make(0,255,0),0);
 
+    LV_FONT_DECLARE(digitmono_36);
     m_lbl_run_timer = lv_label_create(m_canvas_exec);
     lv_label_set_long_mode(m_lbl_run_timer, LV_LABEL_LONG_WRAP);
     lv_label_set_text(m_lbl_run_timer, "...");
     lv_obj_set_style_text_align(m_lbl_run_timer, LV_TEXT_ALIGN_CENTER, 0);
     lv_obj_set_width(m_lbl_run_timer, 240);
     lv_obj_align(m_lbl_run_timer,LV_ALIGN_TOP_MID,0,36);
-    lv_obj_set_style_text_font(m_lbl_run_timer,&lv_font_montserrat_28,0);
+    lv_obj_set_style_text_font(m_lbl_run_timer,&digitmono_36,0);
     lv_obj_set_style_text_color(m_lbl_run_timer,lv_color_make(255,255,255),0);
 
     btn = lv_btn_create(m_canvas_exec);
@@ -214,6 +225,39 @@ MainMenu::MainMenu() : BaseMenu()
     lv_obj_add_event_cb(btn, BTN_stop_click, LV_EVENT_CLICKED, NULL);    
 
 
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                  MENU DI ALLARME
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////      
+    
+    m_canvas_alarm = lv_canvas_create(m_screen);
+    lv_obj_set_pos(m_canvas_alarm,0,190);
+    lv_obj_set_size(m_canvas_alarm,240,130);
+
+    lv_obj_add_flag(m_canvas_alarm,LV_OBJ_FLAG_HIDDEN);
+
+    
+    m_lbl_alarm_desc = lv_label_create(m_canvas_alarm);
+    lv_label_set_long_mode(m_lbl_alarm_desc, LV_LABEL_LONG_WRAP);
+    lv_label_set_text(m_lbl_alarm_desc, "...");
+    lv_obj_set_style_text_align(m_lbl_alarm_desc, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_set_width(m_lbl_alarm_desc, 240);
+    lv_obj_align(m_lbl_alarm_desc,LV_ALIGN_TOP_MID,0,10);
+    lv_obj_set_style_text_font(m_lbl_alarm_desc,&lv_font_montserrat_28,0);
+    lv_obj_set_style_text_color(m_lbl_alarm_desc,lv_color_make(255,255,255),0);
+
+
+    btn = lv_btn_create(m_canvas_alarm);
+    //lv_obj_add_event_cb(btn, event_handler, LV_EVENT_ALL, NULL);
+    lv_obj_align(btn, LV_ALIGN_BOTTOM_MID, 0, -5);
+    lv_obj_set_width(btn,200);
+    lbl = lv_label_create(btn);    
+    lv_label_set_text(lbl, "RESET");
+    lv_obj_center(lbl);
+    lv_obj_set_style_text_font(lbl,&lv_font_montserrat_28,0);    
+    lv_obj_set_style_bg_color(btn,lv_color_make(255,0,0),0);
+    lv_obj_set_style_radius(btn,20,0);    
+    lv_obj_add_event_cb(btn, BTN_alarm_click, LV_EVENT_CLICKED, NULL);    
+    
 
     lv_scr_load(m_screen);
 }
@@ -233,8 +277,8 @@ MainMenu::~MainMenu()
 void MainMenu::setChartData(float temperature, float humidity)
 {
     char txt[20];
-    lv_chart_set_next_value(m_chart, m_chart_ser_temperature, temperature);
-    lv_chart_set_next_value(m_chart, m_chart_ser_humidity, humidity);
+    lv_chart_set_next_value(m_chart, m_chart_ser_temperature, temperature*10);
+    lv_chart_set_next_value(m_chart, m_chart_ser_humidity, humidity*10);
 
     sprintf(txt,"% 3.1f °C",temperature);
     lv_label_set_text(m_lbl_temperature, txt);
@@ -243,8 +287,9 @@ void MainMenu::setChartData(float temperature, float humidity)
 
     sprintf(txt,"% 3.1f °C",temperature);
     lv_label_set_text(m_lbl_run_temperature, txt);
-    sprintf(txt,"% 3.1f %%",humidity);
-    lv_label_set_text(m_lbl_run_humidity, txt);
+
+    sprintf(txt,"% 3.1d °C",m_target);
+    lv_label_set_text(m_lbl_run_target, txt);
     
 }
 
@@ -261,10 +306,18 @@ void MainMenu::CHART_onEvent(lv_event_t *e)
         lv_obj_draw_part_dsc_t* dsc_chart = lv_event_get_draw_part_dsc(e);
         if (dsc_chart->part = LV_PART_TICKS) {
             if (dsc_chart->id == LV_CHART_AXIS_PRIMARY_Y) {            
-                if(dsc_chart->text) dsc_chart->label_dsc->color = lv_color_make(255, 0, 0);
+                if(dsc_chart->text){
+                    dsc_chart->label_dsc->color = lv_color_make(255, 0, 0);
+                    float f = String(dsc_chart->text).toFloat();
+                    strcpy(dsc_chart->text,String((int)(f/10)).c_str());
+                }
             }
             else if (dsc_chart->id == LV_CHART_AXIS_SECONDARY_Y) {
-                if(dsc_chart->text) dsc_chart->label_dsc->color = lv_color_make(0, 0, 255);
+                if(dsc_chart->text){
+                    dsc_chart->label_dsc->color = lv_color_make(0, 0, 255);
+                    float f = String(dsc_chart->text).toFloat();
+                    strcpy(dsc_chart->text,String((int)(f/10)).c_str());                    
+                }
             }               
         }
     }
@@ -276,7 +329,7 @@ void MainMenu::BTN_temp_inc(lv_event_t *e){
     if( (m_pMainMenu->m_target) > 80) m_pMainMenu->m_target = 80;
     sprintf(txt,"%2d °C",m_pMainMenu->m_target);
     lv_label_set_text(m_pMainMenu->m_lbl_target,txt);
-    lv_chart_set_all_value(m_pMainMenu->m_chart,m_pMainMenu->m_chart_ser_target,m_pMainMenu->m_target);
+    lv_chart_set_all_value(m_pMainMenu->m_chart,m_pMainMenu->m_chart_ser_target,m_pMainMenu->m_target*10);
 }
 
 void MainMenu::BTN_temp_dec(lv_event_t *e){
@@ -285,7 +338,7 @@ void MainMenu::BTN_temp_dec(lv_event_t *e){
     if( (m_pMainMenu->m_target) < 20) m_pMainMenu->m_target = 20;
     sprintf(txt,"%2d °C",m_pMainMenu->m_target);
     lv_label_set_text(m_pMainMenu->m_lbl_target,txt);
-    lv_chart_set_all_value(m_pMainMenu->m_chart,m_pMainMenu->m_chart_ser_target,m_pMainMenu->m_target);
+    lv_chart_set_all_value(m_pMainMenu->m_chart,m_pMainMenu->m_chart_ser_target,m_pMainMenu->m_target*10);
 }
 
 void MainMenu::BTN_timer_h_inc(lv_event_t *e){
@@ -344,6 +397,11 @@ void MainMenu::BTN_stop_click(lv_event_t *e){
     main_state = MAIN_MENU;
 }
 
+void MainMenu::BTN_alarm_click(lv_event_t *e){
+
+
+}
+
 float MainMenu::getTarget(){
     return m_target;
 }
@@ -354,4 +412,24 @@ int MainMenu::getTimerSec(){
 
 void MainMenu::setTimerString(char * txt){
     lv_label_set_text(m_pMainMenu->m_lbl_run_timer,txt);  
+}
+
+void MainMenu::stop(){
+    BTN_stop_click(NULL);
+}
+
+void MainMenu::alarm(String desc){
+    lv_label_set_text(m_lbl_alarm_desc,desc.c_str());  
+    lv_obj_add_flag(m_pMainMenu->m_canvas_exec,LV_OBJ_FLAG_HIDDEN);
+    lv_obj_add_flag(m_pMainMenu->m_canvas_main,LV_OBJ_FLAG_HIDDEN);
+    lv_obj_clear_flag(m_pMainMenu->m_canvas_alarm,LV_OBJ_FLAG_HIDDEN);
+    main_state = ALARM;
+}
+
+void MainMenu::setHeater(bool heater){
+    if(heater){
+        lv_obj_clear_flag(m_fire,LV_OBJ_FLAG_HIDDEN);        
+    }else{
+        lv_obj_add_flag(m_fire,LV_OBJ_FLAG_HIDDEN);        
+    }
 }

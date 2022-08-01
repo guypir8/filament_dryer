@@ -3,6 +3,7 @@
 #include <TFT_eSPI.h>
 #include "MainApp.h"
 #include "system/UTimer.h"
+#include "system/ConfigData.h"
 
 #define U_2SEC 1000000
 
@@ -73,11 +74,6 @@ void hardwareInit(){
     /*
     * Switch on backlit
     */
-    /*
-    pinMode(15, OUTPUT);
-    digitalWrite(15, LOW);
-    delay(1);    
-    */
     ledcAttachPin(15,4);
     ledcSetup(4,5000,8);
     ledcWrite(4,0);
@@ -120,6 +116,8 @@ void hardwareInit(){
 void setup()
 {
     Serial.begin(115200);
+
+    configData.restore();
 
     hardwareInit();
     style_init();
