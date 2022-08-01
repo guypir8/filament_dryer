@@ -3,6 +3,7 @@
 #include "string.h"
 #include "system/Rele.h"
 #include "system/ConfigData.h"
+#include "config.h"
 
 /**
  * @brief Construct a new Main App:: Main App object
@@ -20,7 +21,7 @@ MainApp::MainApp(){
     /* Status Bar */
 
     /* Plugins */
-    m_dht = new DHT(32, DHT22);
+    m_dht = new DHT(DHT22_PIN, DHT22);
     m_dht->begin();
     m_2sec = false;
     m_pid = NULL;
@@ -64,7 +65,7 @@ void MainApp::run(){
                 break;
             case MAIN_STATE::START:            
                 if(m_pid) delete m_pid;
-                m_pid = new Pid(m_main_menu->getTarget(),1);
+                m_pid = new Pid(m_main_menu->getTarget(),PID_WARMUP_THRESHOLD);
                 sprintf(txt,"WARM UP");
                 m_main_menu->setTimerString(txt);                
                 main_state = RAMPUP;
@@ -95,7 +96,7 @@ void MainApp::run(){
 
                 action = m_pid->PID_control(m_temperature);
                 if(action > -1){
-                   RELE.setStatePWM(action,30);
+                   RELE.setStatePWM(action,RELE_PWM_PERIOD);
                    m_main_menu->setHeater(RELE.getState());
                    Serial.printf("action=%f\n",action);
                 }
@@ -109,19 +110,21 @@ void MainApp::run(){
     }
     
     /* Allarme se si supera gli 80°C per 5 secondi */
-    if(m_temperature >= 80 && m_overtemp_timer.elapsed() > 5000000){
+    if(m_temperature >= ALARM_OVERTEMP_TEMP && m_overtemp_timer.elapsed() > (ALARM_OVERTEMP_TIMEOUT_SEC * 1000000) ){
         RELE.setState(false);
+        m_main_menu->setHeater(false);
         m_main_menu->alarm("Overtemp");
-    }else if( m_temperature < 80 ){
+    }else if( m_temperature < ALARM_OVERTEMP_TEMP ){
         m_overtemp_timer.reset();
     }
 
     /* Allarme se non si raggiunge il set point in 2 ore */
     if(RELE.getState()){
-        if( (abs(m_temperature-m_main_menu->getTarget()) > 3) && m_heatfail_timer.elapsed() > 7200000000 ){
+        if( (abs(m_temperature-m_main_menu->getTarget()) > ALARM_HEATERFAIL_THRESHOLD) && m_heatfail_timer.elapsed() > (ALARM_HEATERFAIL_TIMEOUT_SEC * 1000000) ){
             RELE.setState(false);
+            m_main_menu->setHeater(false);
             m_main_menu->alarm("Heater fail");
-        }else if( abs(m_temperature-m_main_menu->getTarget()) < 3 ){
+        }else if( abs(m_temperature-m_main_menu->getTarget()) < ALARM_HEATERFAIL_THRESHOLD ){
             m_heatfail_timer.reset();
         }
     }
@@ -170,9 +173,9 @@ void MainApp::getThermoIgrometerData(){
     float t = m_dht->readTemperature();
     float h = m_dht->readHumidity();
 
-    // Check if any reads failed and exit early (to try again).
     if (isnan(h) || isnan(t)) {
-        Serial.println("Errore lettura sensore");
+        RELE.setState(false);
+        m_main_menu->alarm("DHT22 ERR");
         return;
     }
 
@@ -184,8 +187,4 @@ void MainApp::getThermoIgrometerData(){
     Serial.print(F("%  Temperature: "));
     Serial.print(t);
     Serial.println(F("°C "));
-}
-
-void MainApp::setHeater(bool status){
-
 }

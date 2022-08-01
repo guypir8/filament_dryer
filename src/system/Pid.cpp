@@ -1,21 +1,21 @@
 #include <Arduino.h>
 #include "Pid.h"
+#include "config.h"
 
 Pid::Pid(float target, float diff){
     Setpoint = target;
     SetpointDiff = diff;
 
-    kp=160;    //2.5
-    ki=0.06;    //0.06
-    kd=50;     // 0.8   
+    kp = PID_KP;
+    ki = PID_KI;
+    kd = PID_KD;
 
     PID_p = 0;
     PID_d = 0;
     PID_i = 0;
 
-    refresh_rate = 200;
+    refresh_rate = PID_REFRESH_RATE;
 
-    Serial.printf("PID TARGET=%f\n",target);
 }
 
 void Pid::setPid(float p, float i, float d){
@@ -40,16 +40,16 @@ float Pid::PID_control(float real_temp)
         PID_p = kp * now_pid_error;
         PID_d = kd * ((now_pid_error - prev_pid_error) / (float)refresh_rate);
 
-        if (-1 < now_pid_error && now_pid_error < 1)
+        if (-PID_INTEGRAL_THRESHOLD < now_pid_error && now_pid_error < PID_INTEGRAL_THRESHOLD)
         {
             PID_i = PID_i + (ki * now_pid_error);
-            Serial.printf("PID_i=%f i=%f\n",PID_i,ki * now_pid_error);
+            //Serial.printf("PID_i=%f i=%f\n",PID_i,ki * now_pid_error);
         }
         else
         {
             PID_i = 0;
         }
-        Serial.printf("ERR=%f P=%f I=%f D=%f\n",now_pid_error, PID_p , PID_i , PID_d);
+        //Serial.printf("ERR=%f P=%f I=%f D=%f\n",now_pid_error, PID_p , PID_i , PID_d);
 
         PID_total = PID_p + PID_i + PID_d;
         PID_total = map(PID_total, 0, 150, 0, 255);

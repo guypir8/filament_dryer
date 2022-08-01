@@ -1,6 +1,7 @@
 #include "main_menu.h"
 #include <Arduino.h>
 #include "system/ConfigData.h"
+#include "config.h"
 
 
 MainMenu* MainMenu::m_pMainMenu = 0;
@@ -38,7 +39,7 @@ MainMenu::MainMenu() : BaseMenu()
     lv_chart_set_axis_tick(m_chart, LV_CHART_AXIS_PRIMARY_Y, 2, 1, 7, 2, true, 50);
     lv_chart_set_axis_tick(m_chart, LV_CHART_AXIS_SECONDARY_Y, 2, 1, 6, 4, true, 50);
 
-    lv_chart_set_point_count(m_chart, 100);
+    lv_chart_set_point_count(m_chart, CHART_POINTS);
 
 
     /* Add 3 data series */
@@ -398,8 +399,9 @@ void MainMenu::BTN_stop_click(lv_event_t *e){
 }
 
 void MainMenu::BTN_alarm_click(lv_event_t *e){
-
-
+    lv_obj_add_flag(m_pMainMenu->m_canvas_alarm,LV_OBJ_FLAG_HIDDEN);
+    lv_obj_clear_flag(m_pMainMenu->m_canvas_main,LV_OBJ_FLAG_HIDDEN);
+    main_state = MAIN_MENU;
 }
 
 float MainMenu::getTarget(){

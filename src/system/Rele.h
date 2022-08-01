@@ -2,8 +2,9 @@
 #define _RELE_
 
 #include "system/UTimer.h"
+#include "config.h"
 
-#define PIN_RELE 26
+#define PIN_RELE RELE_PIN
 
 class Rele {
 

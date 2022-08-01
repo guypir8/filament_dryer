@@ -26,7 +26,6 @@ class MainApp {
         void tick1sec();
         void closeAllMenu(BaseMenu * except);    
         void getThermoIgrometerData(); 
-        void setHeater(bool status);
         
         /* Flags */
         bool m_single_machine_step;
