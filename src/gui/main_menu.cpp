@@ -277,6 +277,11 @@ MainMenu::~MainMenu()
  */
 void MainMenu::setChartData(float temperature, float humidity)
 {
+
+    if (humidity == -1 || temperature == -1) {
+        return;
+    }
+
     char txt[20];
     lv_chart_set_next_value(m_chart, m_chart_ser_temperature, temperature*10);
     lv_chart_set_next_value(m_chart, m_chart_ser_humidity, humidity*10);
@@ -425,7 +430,6 @@ void MainMenu::alarm(String desc){
     lv_obj_add_flag(m_pMainMenu->m_canvas_exec,LV_OBJ_FLAG_HIDDEN);
     lv_obj_add_flag(m_pMainMenu->m_canvas_main,LV_OBJ_FLAG_HIDDEN);
     lv_obj_clear_flag(m_pMainMenu->m_canvas_alarm,LV_OBJ_FLAG_HIDDEN);
-    main_state = ALARM;
 }
 
 void MainMenu::setHeater(bool heater){

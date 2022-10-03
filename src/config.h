@@ -7,7 +7,8 @@
  * 
  * @copyright Copyright (c) 2022
  * 
- * v1.0 :   First emission
+ * v1.0.1 :   Removed BUG when DHT22 fails
+ * v1.0.0 :   First emission
  */
 
 /**

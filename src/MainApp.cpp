@@ -61,6 +61,7 @@ void MainApp::run(){
                 if(m_main_menu == NULL){
                     m_main_menu = new MainMenu();
                 }
+                m_main_menu->setHeater(false);
                 RELE.setState(false);
                 break;
             case MAIN_STATE::START:            
@@ -105,7 +106,6 @@ void MainApp::run(){
                 }
                 break;   
             case MAIN_STATE::ALARM:
-
                 break;
     }
     
@@ -170,12 +170,16 @@ void MainApp::tick1sec(){
  * 
  */
 void MainApp::getThermoIgrometerData(){
+
     float t = m_dht->readTemperature();
     float h = m_dht->readHumidity();
-
+    
     if (isnan(h) || isnan(t)) {
         RELE.setState(false);
         m_main_menu->alarm("DHT22 ERR");
+        main_state = ALARM;
+        m_temperature = -1;
+        m_humidity = -1;
         return;
     }
 
