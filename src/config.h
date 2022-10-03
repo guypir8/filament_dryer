@@ -2,7 +2,7 @@
  * @file config.h
  * @author GuyPir8 (guypir8@gmail.com)
  * @brief 
- * @version 1.0
+ * @version 1.0.0
  * @date 2022-08-01
  * 
  * @copyright Copyright (c) 2022
